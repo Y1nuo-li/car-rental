@@ -1,55 +1,59 @@
-# merge-descriptors
+# ms
 
-> Merge objects using their property descriptors
+![CI](https://github.com/vercel/ms/workflows/CI/badge.svg)
 
-## Install
+Use this package to easily convert various time formats to milliseconds.
 
-```sh
-npm install merge-descriptors
-```
-
-## Usage
+## Examples
 
 ```js
-import mergeDescriptors from 'merge-descriptors';
-
-const thing = {
-	get name() {
-		return 'John'
-	}
-}
-
-const animal = {};
-
-mergeDescriptors(animal, thing);
-
-console.log(animal.name);
-//=> 'John'
+ms('2 days')  // 172800000
+ms('1d')      // 86400000
+ms('10h')     // 36000000
+ms('2.5 hrs') // 9000000
+ms('2h')      // 7200000
+ms('1m')      // 60000
+ms('5s')      // 5000
+ms('1y')      // 31557600000
+ms('100')     // 100
+ms('-3 days') // -259200000
+ms('-1h')     // -3600000
+ms('-200')    // -200
 ```
 
-## API
+### Convert from Milliseconds
 
-### merge(destination, source, overwrite?)
+```js
+ms(60000)             // "1m"
+ms(2 * 60000)         // "2m"
+ms(-3 * 60000)        // "-3m"
+ms(ms('10 hours'))    // "10h"
+```
 
-Merges "own" properties from a source to a destination object, including non-enumerable and accessor-defined properties. It retains original values and descriptors, ensuring the destination receives a complete and accurate copy of the source's properties.
+### Time Format Written-Out
 
-Returns the modified destination object.
+```js
+ms(60000, { long: true })             // "1 minute"
+ms(2 * 60000, { long: true })         // "2 minutes"
+ms(-3 * 60000, { long: true })        // "-3 minutes"
+ms(ms('10 hours'), { long: true })    // "10 hours"
+```
 
-#### destination
+## Features
 
-Type: `object`
+- Works both in [Node.js](https://nodejs.org) and in the browser
+- If a number is supplied to `ms`, a string with a unit is returned
+- If a string that contains the number is supplied, it returns it as a number (e.g.: it returns `100` for `'100'`)
+- If you pass a string with a number and a valid unit, the number of equivalent milliseconds is returned
 
-The object to receive properties.
+## Related Packages
 
-#### source
+- [ms.macro](https://github.com/knpwrs/ms.macro) - Run `ms` as a macro at build-time.
 
-Type: `object`
+## Caught a Bug?
 
-The object providing properties.
+1. [Fork](https://help.github.com/articles/fork-a-repo/) this repository to your own GitHub account and then [clone](https://help.github.com/articles/cloning-a-repository/) it to your local device
+2. Link the package to the global module directory: `npm link`
+3. Within the module you want to test your local development instance of ms, just link it to the dependencies: `npm link ms`. Instead of the default one from npm, Node.js will now use your clone of ms!
 
-#### overwrite
-
-Type: `boolean`\
-Default: `true`
-
-A boolean to control overwriting of existing properties.
+As always, you can run the tests using: `npm test`

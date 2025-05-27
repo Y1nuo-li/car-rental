@@ -1,269 +1,262 @@
-/*!
- * express
- * Copyright(c) 2009-2013 TJ Holowaychuk
- * Copyright(c) 2014-2015 Douglas Christopher Wilson
- * MIT Licensed
- */
-
 'use strict';
 
-/**
- * Module dependencies.
- * @api private
- */
+var test = require('tape');
+var inspect = require('object-inspect');
+var SaferBuffer = require('safer-buffer').Buffer;
+var forEach = require('for-each');
+var v = require('es-value-fixtures');
 
-var { METHODS } = require('node:http');
-var contentType = require('content-type');
-var etag = require('etag');
-var mime = require('mime-types')
-var proxyaddr = require('proxy-addr');
-var qs = require('qs');
-var querystring = require('querystring');
+var utils = require('../lib/utils');
 
-/**
- * A list of lowercased HTTP methods that are supported by Node.js.
- * @api private
- */
-exports.methods = METHODS.map((method) => method.toLowerCase());
+test('merge()', function (t) {
+    t.deepEqual(utils.merge(null, true), [null, true], 'merges true into null');
 
-/**
- * Return strong ETag for `body`.
- *
- * @param {String|Buffer} body
- * @param {String} [encoding]
- * @return {String}
- * @api private
- */
+    t.deepEqual(utils.merge(null, [42]), [null, 42], 'merges null into an array');
 
-exports.etag = createETagGenerator({ weak: false })
+    t.deepEqual(utils.merge({ a: 'b' }, { a: 'c' }), { a: ['b', 'c'] }, 'merges two objects with the same key');
 
-/**
- * Return weak ETag for `body`.
- *
- * @param {String|Buffer} body
- * @param {String} [encoding]
- * @return {String}
- * @api private
- */
+    var oneMerged = utils.merge({ foo: 'bar' }, { foo: { first: '123' } });
+    t.deepEqual(oneMerged, { foo: ['bar', { first: '123' }] }, 'merges a standalone and an object into an array');
 
-exports.wetag = createETagGenerator({ weak: true })
+    var twoMerged = utils.merge({ foo: ['bar', { first: '123' }] }, { foo: { second: '456' } });
+    t.deepEqual(twoMerged, { foo: { 0: 'bar', 1: { first: '123' }, second: '456' } }, 'merges a standalone and two objects into an array');
 
-/**
- * Normalize the given `type`, for example "html" becomes "text/html".
- *
- * @param {String} type
- * @return {Object}
- * @api private
- */
+    var sandwiched = utils.merge({ foo: ['bar', { first: '123', second: '456' }] }, { foo: 'baz' });
+    t.deepEqual(sandwiched, { foo: ['bar', { first: '123', second: '456' }, 'baz'] }, 'merges an object sandwiched by two standalones into an array');
 
-exports.normalizeType = function(type){
-  return ~type.indexOf('/')
-    ? acceptParams(type)
-    : { value: (mime.lookup(type) || 'application/octet-stream'), params: {} }
-};
+    var nestedArrays = utils.merge({ foo: ['baz'] }, { foo: ['bar', 'xyzzy'] });
+    t.deepEqual(nestedArrays, { foo: ['baz', 'bar', 'xyzzy'] });
 
-/**
- * Normalize `types`, for example "html" becomes "text/html".
- *
- * @param {Array} types
- * @return {Array}
- * @api private
- */
+    var noOptionsNonObjectSource = utils.merge({ foo: 'baz' }, 'bar');
+    t.deepEqual(noOptionsNonObjectSource, { foo: 'baz', bar: true });
 
-exports.normalizeTypes = function(types) {
-  return types.map(exports.normalizeType);
-};
+    var func = function f() {};
+    t.deepEqual(
+        utils.merge(func, { foo: 'bar' }),
+        [func, { foo: 'bar' }],
+        'functions can not be merged into'
+    );
 
+    func.bar = 'baz';
+    t.deepEqual(
+        utils.merge({ foo: 'bar' }, func),
+        { foo: 'bar', bar: 'baz' },
+        'functions can be merge sources'
+    );
 
-/**
- * Parse accept params `str` returning an
- * object with `.value`, `.quality` and `.params`.
- *
- * @param {String} str
- * @return {Object}
- * @api private
- */
+    t.test(
+        'avoids invoking array setters unnecessarily',
+        { skip: typeof Object.defineProperty !== 'function' },
+        function (st) {
+            var setCount = 0;
+            var getCount = 0;
+            var observed = [];
+            Object.defineProperty(observed, 0, {
+                get: function () {
+                    getCount += 1;
+                    return { bar: 'baz' };
+                },
+                set: function () { setCount += 1; }
+            });
+            utils.merge(observed, [null]);
+            st.equal(setCount, 0);
+            st.equal(getCount, 1);
+            observed[0] = observed[0]; // eslint-disable-line no-self-assign
+            st.equal(setCount, 1);
+            st.equal(getCount, 2);
+            st.end();
+        }
+    );
 
-function acceptParams (str) {
-  var length = str.length;
-  var colonIndex = str.indexOf(';');
-  var index = colonIndex === -1 ? length : colonIndex;
-  var ret = { value: str.slice(0, index).trim(), quality: 1, params: {} };
+    t.end();
+});
 
-  while (index < length) {
-    var splitIndex = str.indexOf('=', index);
-    if (splitIndex === -1) break;
+test('assign()', function (t) {
+    var target = { a: 1, b: 2 };
+    var source = { b: 3, c: 4 };
+    var result = utils.assign(target, source);
 
-    var colonIndex = str.indexOf(';', index);
-    var endIndex = colonIndex === -1 ? length : colonIndex;
+    t.equal(result, target, 'returns the target');
+    t.deepEqual(target, { a: 1, b: 3, c: 4 }, 'target and source are merged');
+    t.deepEqual(source, { b: 3, c: 4 }, 'source is untouched');
 
-    if (splitIndex > endIndex) {
-      index = str.lastIndexOf(';', splitIndex - 1) + 1;
-      continue;
+    t.end();
+});
+
+test('combine()', function (t) {
+    t.test('both arrays', function (st) {
+        var a = [1];
+        var b = [2];
+        var combined = utils.combine(a, b);
+
+        st.deepEqual(a, [1], 'a is not mutated');
+        st.deepEqual(b, [2], 'b is not mutated');
+        st.notEqual(a, combined, 'a !== combined');
+        st.notEqual(b, combined, 'b !== combined');
+        st.deepEqual(combined, [1, 2], 'combined is a + b');
+
+        st.end();
+    });
+
+    t.test('one array, one non-array', function (st) {
+        var aN = 1;
+        var a = [aN];
+        var bN = 2;
+        var b = [bN];
+
+        var combinedAnB = utils.combine(aN, b);
+        st.deepEqual(b, [bN], 'b is not mutated');
+        st.notEqual(aN, combinedAnB, 'aN + b !== aN');
+        st.notEqual(a, combinedAnB, 'aN + b !== a');
+        st.notEqual(bN, combinedAnB, 'aN + b !== bN');
+        st.notEqual(b, combinedAnB, 'aN + b !== b');
+        st.deepEqual([1, 2], combinedAnB, 'first argument is array-wrapped when not an array');
+
+        var combinedABn = utils.combine(a, bN);
+        st.deepEqual(a, [aN], 'a is not mutated');
+        st.notEqual(aN, combinedABn, 'a + bN !== aN');
+        st.notEqual(a, combinedABn, 'a + bN !== a');
+        st.notEqual(bN, combinedABn, 'a + bN !== bN');
+        st.notEqual(b, combinedABn, 'a + bN !== b');
+        st.deepEqual([1, 2], combinedABn, 'second argument is array-wrapped when not an array');
+
+        st.end();
+    });
+
+    t.test('neither is an array', function (st) {
+        var combined = utils.combine(1, 2);
+        st.notEqual(1, combined, '1 + 2 !== 1');
+        st.notEqual(2, combined, '1 + 2 !== 2');
+        st.deepEqual([1, 2], combined, 'both arguments are array-wrapped when not an array');
+
+        st.end();
+    });
+
+    t.end();
+});
+
+test('decode', function (t) {
+    t.equal(
+        utils.decode('a+b'),
+        'a b',
+        'decodes + to space'
+    );
+
+    t.equal(
+        utils.decode('name%2Eobj'),
+        'name.obj',
+        'decodes a string'
+    );
+    t.equal(
+        utils.decode('name%2Eobj%2Efoo', null, 'iso-8859-1'),
+        'name.obj.foo',
+        'decodes a string in iso-8859-1'
+    );
+
+    t.end();
+});
+
+test('encode', function (t) {
+    forEach(v.nullPrimitives, function (nullish) {
+        t['throws'](
+            function () { utils.encode(nullish); },
+            TypeError,
+            inspect(nullish) + ' is not a string'
+        );
+    });
+
+    t.equal(utils.encode(''), '', 'empty string returns itself');
+    t.deepEqual(utils.encode([]), [], 'empty array returns itself');
+    t.deepEqual(utils.encode({ length: 0 }), { length: 0 }, 'empty arraylike returns itself');
+
+    t.test('symbols', { skip: !v.hasSymbols }, function (st) {
+        st.equal(utils.encode(Symbol('x')), 'Symbol%28x%29', 'symbol is encoded');
+
+        st.end();
+    });
+
+    t.equal(
+        utils.encode('(abc)'),
+        '%28abc%29',
+        'encodes parentheses'
+    );
+    t.equal(
+        utils.encode({ toString: function () { return '(abc)'; } }),
+        '%28abc%29',
+        'toStrings and encodes parentheses'
+    );
+
+    t.equal(
+        utils.encode('abc 123 💩', null, 'iso-8859-1'),
+        'abc%20123%20%26%2355357%3B%26%2356489%3B',
+        'encodes in iso-8859-1'
+    );
+
+    var longString = '';
+    var expectedString = '';
+    for (var i = 0; i < 1500; i++) {
+        longString += ' ';
+        expectedString += '%20';
     }
 
-    var key = str.slice(index, splitIndex).trim();
-    var value = str.slice(splitIndex + 1, endIndex).trim();
+    t.equal(
+        utils.encode(longString),
+        expectedString,
+        'encodes a long string'
+    );
 
-    if (key === 'q') {
-      ret.quality = parseFloat(value);
-    } else {
-      ret.params[key] = value;
-    }
+    t.equal(
+        utils.encode('\x28\x29'),
+        '%28%29',
+        'encodes parens normally'
+    );
+    t.equal(
+        utils.encode('\x28\x29', null, null, null, 'RFC1738'),
+        '()',
+        'does not encode parens in RFC1738'
+    );
 
-    index = endIndex + 1;
-  }
+    // todo RFC1738 format
 
-  return ret;
-}
+    t.equal(
+        utils.encode('Āက豈'),
+        '%C4%80%E1%80%80%EF%A4%80',
+        'encodes multibyte chars'
+    );
 
-/**
- * Compile "etag" value to function.
- *
- * @param  {Boolean|String|Function} val
- * @return {Function}
- * @api private
- */
+    t.equal(
+        utils.encode('\uD83D \uDCA9'),
+        '%F0%9F%90%A0%F0%BA%90%80',
+        'encodes lone surrogates'
+    );
 
-exports.compileETag = function(val) {
-  var fn;
+    t.end();
+});
 
-  if (typeof val === 'function') {
-    return val;
-  }
+test('isBuffer()', function (t) {
+    forEach([null, undefined, true, false, '', 'abc', 42, 0, NaN, {}, [], function () {}, /a/g], function (x) {
+        t.equal(utils.isBuffer(x), false, inspect(x) + ' is not a buffer');
+    });
 
-  switch (val) {
-    case true:
-    case 'weak':
-      fn = exports.wetag;
-      break;
-    case false:
-      break;
-    case 'strong':
-      fn = exports.etag;
-      break;
-    default:
-      throw new TypeError('unknown value for etag function: ' + val);
-  }
+    var fakeBuffer = { constructor: Buffer };
+    t.equal(utils.isBuffer(fakeBuffer), false, 'fake buffer is not a buffer');
 
-  return fn;
-}
+    var saferBuffer = SaferBuffer.from('abc');
+    t.equal(utils.isBuffer(saferBuffer), true, 'SaferBuffer instance is a buffer');
 
-/**
- * Compile "query parser" value to function.
- *
- * @param  {String|Function} val
- * @return {Function}
- * @api private
- */
+    var buffer = Buffer.from && Buffer.alloc ? Buffer.from('abc') : new Buffer('abc');
+    t.equal(utils.isBuffer(buffer), true, 'real Buffer instance is a buffer');
+    t.end();
+});
 
-exports.compileQueryParser = function compileQueryParser(val) {
-  var fn;
+test('isRegExp()', function (t) {
+    t.equal(utils.isRegExp(/a/g), true, 'RegExp is a RegExp');
+    t.equal(utils.isRegExp(new RegExp('a', 'g')), true, 'new RegExp is a RegExp');
+    t.equal(utils.isRegExp(new Date()), false, 'Date is not a RegExp');
 
-  if (typeof val === 'function') {
-    return val;
-  }
+    forEach(v.primitives, function (primitive) {
+        t.equal(utils.isRegExp(primitive), false, inspect(primitive) + ' is not a RegExp');
+    });
 
-  switch (val) {
-    case true:
-    case 'simple':
-      fn = querystring.parse;
-      break;
-    case false:
-      break;
-    case 'extended':
-      fn = parseExtendedQueryString;
-      break;
-    default:
-      throw new TypeError('unknown value for query parser function: ' + val);
-  }
-
-  return fn;
-}
-
-/**
- * Compile "proxy trust" value to function.
- *
- * @param  {Boolean|String|Number|Array|Function} val
- * @return {Function}
- * @api private
- */
-
-exports.compileTrust = function(val) {
-  if (typeof val === 'function') return val;
-
-  if (val === true) {
-    // Support plain true/false
-    return function(){ return true };
-  }
-
-  if (typeof val === 'number') {
-    // Support trusting hop count
-    return function(a, i){ return i < val };
-  }
-
-  if (typeof val === 'string') {
-    // Support comma-separated values
-    val = val.split(',')
-      .map(function (v) { return v.trim() })
-  }
-
-  return proxyaddr.compile(val || []);
-}
-
-/**
- * Set the charset in a given Content-Type string.
- *
- * @param {String} type
- * @param {String} charset
- * @return {String}
- * @api private
- */
-
-exports.setCharset = function setCharset(type, charset) {
-  if (!type || !charset) {
-    return type;
-  }
-
-  // parse type
-  var parsed = contentType.parse(type);
-
-  // set charset
-  parsed.parameters.charset = charset;
-
-  // format type
-  return contentType.format(parsed);
-};
-
-/**
- * Create an ETag generator function, generating ETags with
- * the given options.
- *
- * @param {object} options
- * @return {function}
- * @private
- */
-
-function createETagGenerator (options) {
-  return function generateETag (body, encoding) {
-    var buf = !Buffer.isBuffer(body)
-      ? Buffer.from(body, encoding)
-      : body
-
-    return etag(buf, options)
-  }
-}
-
-/**
- * Parse an extended query string with qs.
- *
- * @param {String} str
- * @return {Object}
- * @private
- */
-
-function parseExtendedQueryString(str) {
-  return qs.parse(str, {
-    allowPrototypes: true
-  });
-}
+    t.end();
+});

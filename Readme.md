@@ -1,266 +1,216 @@
-[![Express Logo](https://i.cloudup.com/zfY6lL7eFa-3000x3000.png)](https://expressjs.com/)
+# Path-to-RegExp
 
-**Fast, unopinionated, minimalist web framework for [Node.js](https://nodejs.org).**
+> Turn a path string such as `/user/:name` into a regular expression.
 
-**This project has a [Code of Conduct][].**
-
-## Table of contents
-
-* [Installation](#Installation)
-* [Features](#Features)
-* [Docs & Community](#docs--community)
-* [Quick Start](#Quick-Start)
-* [Running Tests](#Running-Tests)
-* [Philosophy](#Philosophy)
-* [Examples](#Examples)
-* [Contributing to Express](#Contributing)
-* [TC (Technical Committee)](#tc-technical-committee)
-* [Triagers](#triagers)
-* [License](#license)
-
-
-[![NPM Version][npm-version-image]][npm-url]
-[![NPM Downloads][npm-downloads-image]][npm-downloads-url]
-[![OpenSSF Scorecard Badge][ossf-scorecard-badge]][ossf-scorecard-visualizer]
-
-
-```js
-import express from 'express'
-
-const app = express()
-
-app.get('/', (req, res) => {
-  res.send('Hello World')
-})
-
-app.listen(3000)
-```
+[![NPM version][npm-image]][npm-url]
+[![NPM downloads][downloads-image]][downloads-url]
+[![Build status][build-image]][build-url]
+[![Build coverage][coverage-image]][coverage-url]
+[![License][license-image]][license-url]
 
 ## Installation
 
-This is a [Node.js](https://nodejs.org/en/) module available through the
-[npm registry](https://www.npmjs.com/).
-
-Before installing, [download and install Node.js](https://nodejs.org/en/download/).
-Node.js 18 or higher is required.
-
-If this is a brand new project, make sure to create a `package.json` first with
-the [`npm init` command](https://docs.npmjs.com/creating-a-package-json-file).
-
-Installation is done using the
-[`npm install` command](https://docs.npmjs.com/getting-started/installing-npm-packages-locally):
-
-```bash
-npm install express
+```
+npm install path-to-regexp --save
 ```
 
-Follow [our installing guide](https://expressjs.com/en/starter/installing.html)
-for more information.
+## Usage
 
-## Features
-
-  * Robust routing
-  * Focus on high performance
-  * Super-high test coverage
-  * HTTP helpers (redirection, caching, etc)
-  * View system supporting 14+ template engines
-  * Content negotiation
-  * Executable for generating applications quickly
-
-## Docs & Community
-
-  * [Website and Documentation](https://expressjs.com/) - [[website repo](https://github.com/expressjs/expressjs.com)]
-  * [GitHub Organization](https://github.com/expressjs) for Official Middleware & Modules
-  * [Github Discussions](https://github.com/expressjs/discussions) for discussion on the development and usage of Express
-
-**PROTIP** Be sure to read the [migration guide to v5](https://expressjs.com/en/guide/migrating-5)
-
-## Quick Start
-
-  The quickest way to get started with express is to utilize the executable [`express(1)`](https://github.com/expressjs/generator) to generate an application as shown below:
-
-  Install the executable. The executable's major version will match Express's:
-
-```bash
-npm install -g express-generator@4
+```js
+const {
+  match,
+  pathToRegexp,
+  compile,
+  parse,
+  stringify,
+} = require("path-to-regexp");
 ```
 
-  Create the app:
+### Parameters
 
-```bash
-express /tmp/foo && cd /tmp/foo
+Parameters match arbitrary strings in a path by matching up to the end of the segment, or up to any proceeding tokens. They are defined by prefixing a colon to the parameter name (`:foo`). Parameter names can use any valid JavaScript identifier, or be double quoted to use other characters (`:"param-name"`).
+
+```js
+const fn = match("/:foo/:bar");
+
+fn("/test/route");
+//=> { path: '/test/route', params: { foo: 'test', bar: 'route' } }
 ```
 
-  Install dependencies:
+### Wildcard
 
-```bash
-npm install
+Wildcard parameters match one or more characters across multiple segments. They are defined the same way as regular parameters, but are prefixed with an asterisk (`*foo`).
+
+```js
+const fn = match("/*splat");
+
+fn("/bar/baz");
+//=> { path: '/bar/baz', params: { splat: [ 'bar', 'baz' ] } }
 ```
 
-  Start the server:
+### Optional
 
-```bash
-npm start
+Braces can be used to define parts of the path that are optional.
+
+```js
+const fn = match("/users{/:id}/delete");
+
+fn("/users/delete");
+//=> { path: '/users/delete', params: {} }
+
+fn("/users/123/delete");
+//=> { path: '/users/123/delete', params: { id: '123' } }
 ```
 
-  View the website at: http://localhost:3000
+## Match
 
-## Philosophy
+The `match` function returns a function for matching strings against a path:
 
-  The Express philosophy is to provide small, robust tooling for HTTP servers, making
-  it a great solution for single page applications, websites, hybrids, or public
-  HTTP APIs.
+- **path** String or array of strings.
+- **options** _(optional)_ (Extends [pathToRegexp](#pathToRegexp) options)
+  - **decode** Function for decoding strings to params, or `false` to disable all processing. (default: `decodeURIComponent`)
 
-  Express does not force you to use any specific ORM or template engine. With support for over
-  14 template engines via [@ladjs/consolidate](https://github.com/ladjs/consolidate),
-  you can quickly craft your perfect framework.
-
-## Examples
-
-  To view the examples, clone the Express repository:
-
-```bash
-git clone https://github.com/expressjs/express.git --depth 1 && cd express
+```js
+const fn = match("/foo/:bar");
 ```
 
-  Then install the dependencies:
+**Please note:** `path-to-regexp` is intended for ordered data (e.g. paths, hosts). It can not handle arbitrarily ordered data (e.g. query strings, URL fragments, JSON, etc).
 
-```bash
-npm install
+## PathToRegexp
+
+The `pathToRegexp` function returns a regular expression for matching strings against paths. It
+
+- **path** String or array of strings.
+- **options** _(optional)_ (See [parse](#parse) for more options)
+  - **sensitive** Regexp will be case sensitive. (default: `false`)
+  - **end** Validate the match reaches the end of the string. (default: `true`)
+  - **delimiter** The default delimiter for segments, e.g. `[^/]` for `:named` parameters. (default: `'/'`)
+  - **trailing** Allows optional trailing delimiter to match. (default: `true`)
+
+```js
+const { regexp, keys } = pathToRegexp("/foo/:bar");
 ```
 
-  Then run whichever example you want:
+## Compile ("Reverse" Path-To-RegExp)
 
-```bash
-node examples/content-negotiation
+The `compile` function will return a function for transforming parameters into a valid path:
+
+- **path** A string.
+- **options** (See [parse](#parse) for more options)
+  - **delimiter** The default delimiter for segments, e.g. `[^/]` for `:named` parameters. (default: `'/'`)
+  - **encode** Function for encoding input strings for output into the path, or `false` to disable entirely. (default: `encodeURIComponent`)
+
+```js
+const toPath = compile("/user/:id");
+
+toPath({ id: "name" }); //=> "/user/name"
+toPath({ id: "café" }); //=> "/user/caf%C3%A9"
+
+const toPathRepeated = compile("/*segment");
+
+toPathRepeated({ segment: ["foo"] }); //=> "/foo"
+toPathRepeated({ segment: ["a", "b", "c"] }); //=> "/a/b/c"
+
+// When disabling `encode`, you need to make sure inputs are encoded correctly. No arrays are accepted.
+const toPathRaw = compile("/user/:id", { encode: false });
+
+toPathRaw({ id: "%3A%2F" }); //=> "/user/%3A%2F"
 ```
 
-## Contributing
+## Stringify
 
-  [![Linux Build][github-actions-ci-image]][github-actions-ci-url]
-  [![Test Coverage][coveralls-image]][coveralls-url]
+Transform `TokenData` (a sequence of tokens) back into a Path-to-RegExp string.
 
-The Express.js project welcomes all constructive contributions. Contributions take many forms,
-from code for bug fixes and enhancements, to additions and fixes to documentation, additional
-tests, triaging incoming pull requests and issues, and more!
+- **data** A `TokenData` instance
 
-See the [Contributing Guide](Contributing.md) for more technical details on contributing.
+```js
+const data = new TokenData([
+  { type: "text", value: "/" },
+  { type: "param", name: "foo" },
+]);
 
-### Security Issues
-
-If you discover a security vulnerability in Express, please see [Security Policies and Procedures](Security.md).
-
-### Running Tests
-
-To run the test suite, first install the dependencies:
-
-```bash
-npm install
+const path = stringify(data); //=> "/:foo"
 ```
 
-Then run `npm test`:
+## Developers
 
-```bash
-npm test
+- If you are rewriting paths with match and compile, consider using `encode: false` and `decode: false` to keep raw paths passed around.
+- To ensure matches work on paths containing characters usually encoded, such as emoji, consider using [encodeurl](https://github.com/pillarjs/encodeurl) for `encodePath`.
+
+### Parse
+
+The `parse` function accepts a string and returns `TokenData`, the set of tokens and other metadata parsed from the input string. `TokenData` is can used with `match` and `compile`.
+
+- **path** A string.
+- **options** _(optional)_
+  - **encodePath** A function for encoding input strings. (default: `x => x`, recommended: [`encodeurl`](https://github.com/pillarjs/encodeurl))
+
+### Tokens
+
+`TokenData` is a sequence of tokens, currently of types `text`, `parameter`, `wildcard`, or `group`.
+
+### Custom path
+
+In some applications, you may not be able to use the `path-to-regexp` syntax, but still want to use this library for `match` and `compile`. For example:
+
+```js
+import { TokenData, match } from "path-to-regexp";
+
+const tokens = [
+  { type: "text", value: "/" },
+  { type: "parameter", name: "foo" },
+];
+const path = new TokenData(tokens);
+const fn = match(path);
+
+fn("/test"); //=> { path: '/test', index: 0, params: { foo: 'test' } }
 ```
 
-## People
+## Errors
 
-The original author of Express is [TJ Holowaychuk](https://github.com/tj)
+An effort has been made to ensure ambiguous paths from previous releases throw an error. This means you might be seeing an error when things worked before.
 
-[List of all contributors](https://github.com/expressjs/express/graphs/contributors)
+### Unexpected `?` or `+`
 
-### TC (Technical Committee)
+In past releases, `?`, `*`, and `+` were used to denote optional or repeating parameters. As an alternative, try these:
 
-* [UlisesGascon](https://github.com/UlisesGascon) - **Ulises Gascón** (he/him)
-* [jonchurch](https://github.com/jonchurch) - **Jon Church**
-* [wesleytodd](https://github.com/wesleytodd) - **Wes Todd**
-* [LinusU](https://github.com/LinusU) - **Linus Unnebäck**
-* [blakeembrey](https://github.com/blakeembrey) - **Blake Embrey**
-* [sheplu](https://github.com/sheplu) - **Jean Burellier**
-* [crandmck](https://github.com/crandmck) - **Rand McKinney**
-* [ctcpip](https://github.com/ctcpip) - **Chris de Almeida**
+- For optional (`?`), use an empty segment in a group such as `/:file{.:ext}`.
+- For repeating (`+`), only wildcard matching is supported, such as `/*path`.
+- For optional repeating (`*`), use a group and a wildcard parameter such as `/files{/*path}`.
 
-<details>
-<summary>TC emeriti members</summary>
+### Unexpected `(`, `)`, `[`, `]`, etc.
 
-#### TC emeriti members
+Previous versions of Path-to-RegExp used these for RegExp features. This version no longer supports them so they've been reserved to avoid ambiguity. To use these characters literally, escape them with a backslash, e.g. `"\\("`.
 
-  * [dougwilson](https://github.com/dougwilson) - **Douglas Wilson**
-  * [hacksparrow](https://github.com/hacksparrow) - **Hage Yaapa**
-  * [jonathanong](https://github.com/jonathanong) - **jongleberry**
-  * [niftylettuce](https://github.com/niftylettuce) - **niftylettuce**
-  * [troygoode](https://github.com/troygoode) - **Troy Goode**
-</details>
+### Missing parameter name
 
+Parameter names must be provided after `:` or `*`, and they must be a valid JavaScript identifier. If you want an parameter name that isn't a JavaScript identifier, such as starting with a number, you can wrap the name in quotes like `:"my-name"`.
 
-### Triagers
+### Unterminated quote
 
-* [aravindvnair99](https://github.com/aravindvnair99) - **Aravind Nair**
-* [bjohansebas](https://github.com/bjohansebas) - **Sebastian Beltran**
-* [carpasse](https://github.com/carpasse) - **Carlos Serrano**
-* [CBID2](https://github.com/CBID2) - **Christine Belzie**
-* [dpopp07](https://github.com/dpopp07) - **Dustin Popp**
-* [UlisesGascon](https://github.com/UlisesGascon) - **Ulises Gascón** (he/him)
-* [3imed-jaberi](https://github.com/3imed-jaberi) - **Imed Jaberi**
-* [IamLizu](https://github.com/IamLizu) - **S M Mahmudul Hasan** (he/him)
-* [Phillip9587](https://github.com/Phillip9587) - **Phillip Barta**
-* [Sushmeet](https://github.com/Sushmeet) - **Sushmeet Sunger**
-* [rxmarbles](https://github.com/rxmarbles) **Rick Markins** (He/him)
+Parameter names can be wrapped in double quote characters, and this error means you forgot to close the quote character.
 
-<details>
-<summary>Triagers emeriti members</summary>
+### Express <= 4.x
 
-#### Emeritus Triagers
+Path-To-RegExp breaks compatibility with Express <= `4.x` in the following ways:
 
-  * [AuggieH](https://github.com/AuggieH) - **Auggie Hudak**
-  * [G-Rath](https://github.com/G-Rath) - **Gareth Jones**
-  * [MohammadXroid](https://github.com/MohammadXroid) - **Mohammad Ayashi**
-  * [NawafSwe](https://github.com/NawafSwe) - **Nawaf Alsharqi**
-  * [NotMoni](https://github.com/NotMoni) - **Moni**
-  * [VigneshMurugan](https://github.com/VigneshMurugan) - **Vignesh Murugan**
-  * [davidmashe](https://github.com/davidmashe) - **David Ashe**
-  * [digitaIfabric](https://github.com/digitaIfabric) - **David**
-  * [e-l-i-s-e](https://github.com/e-l-i-s-e) - **Elise Bonner**
-  * [fed135](https://github.com/fed135) - **Frederic Charette**
-  * [firmanJS](https://github.com/firmanJS) - **Firman Abdul Hakim**
-  * [getspooky](https://github.com/getspooky) - **Yasser Ameur**
-  * [ghinks](https://github.com/ghinks) - **Glenn**
-  * [ghousemohamed](https://github.com/ghousemohamed) - **Ghouse Mohamed**
-  * [gireeshpunathil](https://github.com/gireeshpunathil) - **Gireesh Punathil**
-  * [jake32321](https://github.com/jake32321) - **Jake Reed**
-  * [jonchurch](https://github.com/jonchurch) - **Jon Church**
-  * [lekanikotun](https://github.com/lekanikotun) - **Troy Goode**
-  * [marsonya](https://github.com/marsonya) - **Lekan Ikotun**
-  * [mastermatt](https://github.com/mastermatt) - **Matt R. Wilson**
-  * [maxakuru](https://github.com/maxakuru) - **Max Edell**
-  * [mlrawlings](https://github.com/mlrawlings) - **Michael Rawlings**
-  * [rodion-arr](https://github.com/rodion-arr) - **Rodion Abdurakhimov**
-  * [sheplu](https://github.com/sheplu) - **Jean Burellier**
-  * [tarunyadav1](https://github.com/tarunyadav1) - **Tarun yadav**
-  * [tunniclm](https://github.com/tunniclm) - **Mike Tunnicliffe**
-  * [enyoghasim](https://github.com/enyoghasim) - **David Enyoghasim**
-  * [0ss](https://github.com/0ss) - **Salah**
-  * [import-brain](https://github.com/import-brain) - **Eric Cheng** (he/him)
-  * [dakshkhetan](https://github.com/dakshkhetan) - **Daksh Khetan** (he/him)
-  * [lucasraziel](https://github.com/lucasraziel) - **Lucas Soares Do Rego**
-  * [mertcanaltin](https://github.com/mertcanaltin) - **Mert Can Altin**
-  
-</details>
-
+- The wildcard `*` must have a name, matching the behavior of parameters `:`.
+- The optional character `?` is no longer supported, use braces instead: `/:file{.:ext}`.
+- Regexp characters are not supported.
+- Some characters have been reserved to avoid confusion during upgrade (`()[]?+!`).
+- Parameter names now support valid JavaScript identifiers, or quoted like `:"this"`.
 
 ## License
 
-  [MIT](LICENSE)
+MIT
 
-[coveralls-image]: https://badgen.net/coveralls/c/github/expressjs/express/master
-[coveralls-url]: https://coveralls.io/r/expressjs/express?branch=master
-[github-actions-ci-image]: https://badgen.net/github/checks/expressjs/express/master?label=CI
-[github-actions-ci-url]: https://github.com/expressjs/express/actions/workflows/ci.yml
-[npm-downloads-image]: https://badgen.net/npm/dm/express
-[npm-downloads-url]: https://npmcharts.com/compare/express?minimal=true
-[npm-url]: https://npmjs.org/package/express
-[npm-version-image]: https://badgen.net/npm/v/express
-[ossf-scorecard-badge]: https://api.scorecard.dev/projects/github.com/expressjs/express/badge
-[ossf-scorecard-visualizer]: https://ossf.github.io/scorecard-visualizer/#/projects/github.com/expressjs/express
-[Code of Conduct]: https://github.com/expressjs/express/blob/master/Code-Of-Conduct.md
+[npm-image]: https://img.shields.io/npm/v/path-to-regexp
+[npm-url]: https://npmjs.org/package/path-to-regexp
+[downloads-image]: https://img.shields.io/npm/dm/path-to-regexp
+[downloads-url]: https://npmjs.org/package/path-to-regexp
+[build-image]: https://img.shields.io/github/actions/workflow/status/pillarjs/path-to-regexp/ci.yml?branch=master
+[build-url]: https://github.com/pillarjs/path-to-regexp/actions/workflows/ci.yml?query=branch%3Amaster
+[coverage-image]: https://img.shields.io/codecov/c/gh/pillarjs/path-to-regexp
+[coverage-url]: https://codecov.io/gh/pillarjs/path-to-regexp
+[license-image]: http://img.shields.io/npm/l/path-to-regexp.svg?style=flat
+[license-url]: LICENSE.md
