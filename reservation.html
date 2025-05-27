@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reservation - DriveEase</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .reservation-container { max-width: 900px; margin: 2.5rem auto; background: #fff; border-radius: 16px; box-shadow: 0 2px 16px rgba(25,118,210,0.10); padding: 2.5rem 2rem; }
+        .reservation-steps { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+        .step { flex: 1; text-align: center; color: #b0bec5; font-weight: 500; position: relative; }
+        .step.active { color: #1976d2; font-weight: 700; }
+        .step:not(:last-child)::after { content: ''; position: absolute; right: 0; top: 50%; width: 100%; height: 2px; background: #e3f0fd; z-index: -1; }
+        .step.active:not(:last-child)::after { background: #1976d2; }
+        .reservation-main { display: flex; gap: 2.5rem; align-items: flex-start; }
+        .car-img { width: 340px; height: 200px; object-fit: cover; border-radius: 12px; background: #f4f7fa; box-shadow: 0 2px 8px rgba(25,118,210,0.08); }
+        .car-info { flex: 1; }
+        .car-title { font-size: 1.5rem; font-weight: 700; color: #1976d2; margin-bottom: 0.2rem; }
+        .car-desc { color: #888; margin-bottom: 1rem; }
+        .car-details { display: flex; flex-wrap: wrap; gap: 0.5rem 2rem; margin-bottom: 1.2rem; font-size: 1.05rem; }
+        .car-details > div { min-width: 120px; }
+        .form-row { display: flex; gap: 1.5rem; margin-bottom: 1.2rem; }
+        .form-group { flex: 1; display: flex; flex-direction: column; }
+        .form-group label { font-size: 1rem; margin-bottom: 0.3rem; color: #1976d2; }
+        .form-group input { padding: 0.6rem 1rem; border: 1px solid #b0bec5; border-radius: 6px; font-size: 1rem; }
+        .form-group input:focus { border: 1.5px solid #1976d2; outline: none; }
+        .total-price { font-size: 1.3rem; font-weight: 700; color: #1976d2; margin-top: 1.2rem; }
+        .reservation-actions { display: flex; justify-content: flex-end; gap: 1.2rem; margin-top: 2rem; }
+        .btn { padding: 0.7rem 2.2rem; border-radius: 6px; border: none; font-size: 1.08rem; font-weight: 500; cursor: pointer; transition: background 0.2s; }
+        .btn-primary { background: #1976d2; color: #fff; }
+        .btn-primary:hover { background: #1565c0; }
+        .btn-outline { background: #fff; color: #1976d2; border: 1.5px solid #1976d2; }
+        .btn-outline:hover { background: #e3f0fd; }
+        .btn-cancel { color: #e57373; background: #fff; border: 1.5px solid #e57373; }
+        .btn-cancel:hover { background: #ffebee; }
+        .confirmation { text-align: center; margin-top: 3rem; }
+        .confirmation h2 { color: #1976d2; font-size: 2rem; }
+        .confirmation .emoji { font-size: 3rem; margin: 1.5rem 0; }
+        .input-feedback { color: #e57373; font-size: 0.8rem; margin-top: 0.2rem; }
+    </style>
+</head>
+<body>
+    <div class="reservation-container">
+        <div class="reservation-steps">
+            <div class="step active" id="step1-label">1 Reservation</div>
+            <div class="step" id="step2-label">2 User Info</div>
+            <div class="step" id="step3-label">3 Confirmation</div>
+        </div>
+        <div id="reservation-step1">
+            <div class="reservation-main">
+                <img id="car-img" class="car-img" src="" alt="Car">
+                <div class="car-info">
+                    <div class="car-title" id="car-title"></div>
+                    <div class="car-desc" id="car-desc"></div>
+                    <div class="car-details">
+                        <div id="car-type"></div>
+                        <div id="car-seats"></div>
+                        <div id="car-mileage"></div>
+                        <div id="car-power"></div>
+                        <div id="car-availability"></div>
+                        <div id="car-price"></div>
+                    </div>
+                    <form id="reservation-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="start-date">Start Date</label>
+                                <input type="date" id="start-date" name="start-date" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="end-date">End Date</label>
+                                <input type="date" id="end-date" name="end-date" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="quantity">Quantity</label>
+                                <input type="number" id="quantity" name="quantity" min="1" max="1" value="1" required>
+                            </div>
+                        </div>
+                        <div class="total-price">Total: <span id="total-price">0.00</span></div>
+                        <div class="reservation-actions">
+                            <button type="button" class="btn btn-cancel" id="cancel-btn">CANCEL</button>
+                            <button type="button" class="btn btn-primary" id="next-btn">NEXT</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div id="reservation-step2" style="display:none;">
+            <form id="user-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="user-name">Name *</label>
+                        <input type="text" id="user-name" name="user-name" required>
+                        <div class="input-feedback" id="feedback-name"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="user-phone">Mobile Number *</label>
+                        <input type="text" id="user-phone" name="user-phone" required>
+                        <div class="input-feedback" id="feedback-phone"></div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="user-email">Email *</label>
+                        <input type="email" id="user-email" name="user-email" required>
+                        <div class="input-feedback" id="feedback-email"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="user-license">Driver license *</label>
+                        <input type="text" id="user-license" name="user-license" required>
+                        <div class="input-feedback" id="feedback-license"></div>
+                    </div>
+                </div>
+                <div class="reservation-actions">
+                    <button type="button" class="btn btn-cancel" id="cancel2-btn">CANCEL</button>
+                    <button type="button" class="btn btn-outline" id="back-btn">BACK</button>
+                    <button type="submit" class="btn btn-primary" id="place-order-btn">PLACE ORDER</button>
+                </div>
+            </form>
+        </div>
+        <div id="reservation-step3" style="display:none;">
+            <div class="confirmation" id="confirmation-content">
+                <h2>Order has been placed, click the link to confirm</h2>
+                <div id="confirmation-link"></div>
+                <button class="btn btn-primary" id="finish-btn">FINISH</button>
+            </div>
+        </div>
+        <div id="reservation-step4" style="display:none;">
+            <div class="confirmation">
+                <div class="emoji">🎉🎉</div>
+                <h2>Reservation confirmed!</h2>
+                <button class="btn btn-primary" onclick="window.location.href='index.html'">FINISH</button>
+            </div>
+        </div>
+        <div id="car-unavailable-msg" style="display:none;text-align:center;color:#e57373;font-size:1.2rem;margin:2rem 0;">This car is unavailable for reservation. Please choose another car.</div>
+        <div id="no-car-selected-msg" style="display:none;text-align:center;color:#e57373;font-size:1.2rem;margin:2rem 0;">Please select a car first from the homepage.</div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="js/reservation.js"></script>
+</body>
+</html> 

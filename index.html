@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Car Rental</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <div class="nav-left">
+            <a href="index.html" class="nav-logo">
+                <img src="images/logo.png" alt="Car Rental Logo" id="logo">
+                <span id="site-title">DriveEase</span>
+            </a>
+        </div>
+        <nav class="nav-center">
+            <div class="nav-item nav-dropdown">
+                <span><img src="images/type-icon.png" class="nav-icon"> VEHICLE TYPES</span>
+                <div class="dropdown-content">
+                    <a href="#" data-type="Sedan"><img src="images/sedan-icon.png" class="nav-icon"> Sedan</a>
+                    <a href="#" data-type="SUV"><img src="images/suv-icon.png" class="nav-icon"> SUV</a>
+                    <a href="#" data-type="Hatchback"><img src="images/hatchback-icon.png" class="nav-icon"> Hatchback</a>
+                    <a href="#" data-type="Convertible"><img src="images/convertible-icon.png" class="nav-icon"> Convertible</a>
+                    <a href="#" data-type="Minivan"><img src="images/minivan-icon.png" class="nav-icon"> Minivan</a>
+                    <a href="#" data-type="All">All Types</a>
+                </div>
+            </div>
+            <div class="nav-item nav-dropdown">
+                <span><img src="images/brand-icon.png" class="nav-icon"> BRANDS</span>
+                <div class="dropdown-content">
+                    <a href="#" data-brand="Audi"><img src="images/audi-icon.png" class="nav-icon"> Audi</a>
+                    <a href="#" data-brand="Ford"><img src="images/ford-icon.png" class="nav-icon"> Ford</a>
+                    <a href="#" data-brand="Honda"><img src="images/honda-icon.png" class="nav-icon"> Honda</a>
+                    <a href="#" data-brand="Kia"><img src="images/kia-icon.png" class="nav-icon"> Kia</a>
+                    <a href="#" data-brand="MINI"><img src="images/mini-icon.png" class="nav-icon"> MINI</a>
+                    <a href="#" data-brand="Toyota"><img src="images/toyota-icon.png" class="nav-icon"> Toyota</a>
+                    <a href="#" data-brand="All">All Brands</a>
+                </div>
+            </div>
+        </nav>
+        <div class="nav-right">
+            <div class="search-box-wrapper">
+                <input type="text" id="search-box" placeholder="Search cars...">
+                <div id="search-suggestions" style="position:absolute;top:100%;left:0;width:100%;z-index:20;"></div>
+            </div>
+        </div>
+    </header>
+    
+    <main>
+        <div id="car-grid">
+            <!-- 汽车将在这里动态加载 -->
+        </div>
+    </main>
+    
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="js/script.js"></script>
+</body>
+</html>
