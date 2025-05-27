@@ -5,33 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [v1.1.1](https://github.com/ljharb/es-object-atoms/compare/v1.1.0...v1.1.1) - 2025-01-14
+## [v2.0.2](https://github.com/inspect-js/hasOwn/compare/v2.0.1...v2.0.2) - 2024-03-10
 
 ### Commits
 
-- [types] `ToObject`: improve types [`cfe8c8a`](https://github.com/ljharb/es-object-atoms/commit/cfe8c8a105c44820cb22e26f62d12ef0ad9715c8)
+- [types] use shared config [`68e9d4d`](https://github.com/inspect-js/hasOwn/commit/68e9d4dab6facb4f05f02c6baea94a3f2a4e44b2)
+- [actions] remove redundant finisher; use reusable workflow [`241a68e`](https://github.com/inspect-js/hasOwn/commit/241a68e13ea1fe52bec5ba7f74144befc31fae7b)
+- [Tests] increase coverage [`4125c0d`](https://github.com/inspect-js/hasOwn/commit/4125c0d6121db56ae30e38346dfb0c000b04f0a7)
+- [Tests] skip `npm ls` in old node due to TS [`01b9282`](https://github.com/inspect-js/hasOwn/commit/01b92822f9971dea031eafdd14767df41d61c202)
+- [types] improve predicate type [`d340f85`](https://github.com/inspect-js/hasOwn/commit/d340f85ce02e286ef61096cbbb6697081d40a12b)
+- [Dev Deps] update `tape` [`70089fc`](https://github.com/inspect-js/hasOwn/commit/70089fcf544e64acc024cbe60f5a9b00acad86de)
+- [Tests] use `@arethetypeswrong/cli` [`50b272c`](https://github.com/inspect-js/hasOwn/commit/50b272c829f40d053a3dd91c9796e0ac0b2af084)
 
-## [v1.1.0](https://github.com/ljharb/es-object-atoms/compare/v1.0.1...v1.1.0) - 2025-01-14
-
-### Commits
-
-- [New] add `isObject` [`51e4042`](https://github.com/ljharb/es-object-atoms/commit/51e4042df722eb3165f40dc5f4bf33d0197ecb07)
-
-## [v1.0.1](https://github.com/ljharb/es-object-atoms/compare/v1.0.0...v1.0.1) - 2025-01-13
-
-### Commits
-
-- [Dev Deps] update `@ljharb/eslint-config`, `@ljharb/tsconfig`, `@types/tape`, `auto-changelog`, `tape` [`38ab9eb`](https://github.com/ljharb/es-object-atoms/commit/38ab9eb00b62c2f4668644f5e513d9b414ebd595)
-- [types] improve types [`7d1beb8`](https://github.com/ljharb/es-object-atoms/commit/7d1beb887958b78b6a728a210a1c8370ab7e2aa1)
-- [Tests] replace `aud` with `npm audit` [`25863ba`](https://github.com/ljharb/es-object-atoms/commit/25863baf99178f1d1ad33d1120498db28631907e)
-- [Dev Deps] add missing peer dep [`c012309`](https://github.com/ljharb/es-object-atoms/commit/c0123091287e6132d6f4240496340c427433df28)
-
-## v1.0.0 - 2024-03-16
+## [v2.0.1](https://github.com/inspect-js/hasOwn/compare/v2.0.0...v2.0.1) - 2024-02-10
 
 ### Commits
 
-- Initial implementation, tests, readme, types [`f1499db`](https://github.com/ljharb/es-object-atoms/commit/f1499db7d3e1741e64979c61d645ab3137705e82)
-- Initial commit [`99eedc7`](https://github.com/ljharb/es-object-atoms/commit/99eedc7b5fde38a50a28d3c8b724706e3e4c5f6a)
-- [meta] rename repo [`fc851fa`](https://github.com/ljharb/es-object-atoms/commit/fc851fa70616d2d182aaf0bd02c2ed7084dea8fa)
-- npm init [`b909377`](https://github.com/ljharb/es-object-atoms/commit/b909377c50049bd0ec575562d20b0f9ebae8947f)
-- Only apps should have lockfiles [`7249edd`](https://github.com/ljharb/es-object-atoms/commit/7249edd2178c1b9ddfc66ffcc6d07fdf0d28efc1)
+- [types] use a handwritten d.ts file; fix exported type [`012b989`](https://github.com/inspect-js/hasOwn/commit/012b9898ccf91dc441e2ebf594ff70270a5fda58)
+- [Dev Deps] update `@types/function-bind`, `@types/mock-property`, `@types/tape`, `aud`, `mock-property`, `npmignore`, `tape`, `typescript` [`977a56f`](https://github.com/inspect-js/hasOwn/commit/977a56f51a1f8b20566f3c471612137894644025)
+- [meta] add `sideEffects` flag [`3a60b7b`](https://github.com/inspect-js/hasOwn/commit/3a60b7bf42fccd8c605e5f145a6fcc83b13cb46f)
+
+## [v2.0.0](https://github.com/inspect-js/hasOwn/compare/v1.0.1...v2.0.0) - 2023-10-19
+
+### Commits
+
+- revamped implementation, tests, readme [`72bf8b3`](https://github.com/inspect-js/hasOwn/commit/72bf8b338e77a638f0a290c63ffaed18339c36b4)
+- [meta] revamp package.json [`079775f`](https://github.com/inspect-js/hasOwn/commit/079775fb1ec72c1c6334069593617a0be3847458)
+- Only apps should have lockfiles [`6640e23`](https://github.com/inspect-js/hasOwn/commit/6640e233d1bb8b65260880f90787637db157d215)
+
+## v1.0.1 - 2023-10-10
+
+### Commits
+
+- Initial commit [`8dbfde6`](https://github.com/inspect-js/hasOwn/commit/8dbfde6e8fb0ebb076fab38d138f2984eb340a62)

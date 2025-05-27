@@ -1,11 +1,23 @@
-/*!
- * express
- * Copyright(c) 2009-2013 TJ Holowaychuk
- * Copyright(c) 2013 Roman Shtylman
- * Copyright(c) 2014-2015 Douglas Christopher Wilson
- * MIT Licensed
- */
+"use strict";
 
-'use strict';
+// Update this array if you add/rename/remove files in this directory.
+// We support Browserify by skipping automatic module discovery and requiring modules directly.
+var modules = [
+    require("./internal"),
+    require("./utf32"),
+    require("./utf16"),
+    require("./utf7"),
+    require("./sbcs-codec"),
+    require("./sbcs-data"),
+    require("./sbcs-data-generated"),
+    require("./dbcs-codec"),
+    require("./dbcs-data"),
+];
 
-module.exports = require('./lib/express');
+// Put all encoding/alias/codec definitions to single object and export it.
+for (var i = 0; i < modules.length; i++) {
+    var module = modules[i];
+    for (var enc in module)
+        if (Object.prototype.hasOwnProperty.call(module, enc))
+            exports[enc] = module[enc];
+}
