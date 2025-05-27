@@ -1,62 +1,63 @@
-# call-bind-apply-helpers <sup>[![Version Badge][npm-version-svg]][package-url]</sup>
+# es-object-atoms <sup>[![Version Badge][npm-version-svg]][package-url]</sup>
 
 [![github actions][actions-image]][actions-url]
 [![coverage][codecov-image]][codecov-url]
-[![dependency status][deps-svg]][deps-url]
-[![dev dependency status][dev-deps-svg]][dev-deps-url]
 [![License][license-image]][license-url]
 [![Downloads][downloads-image]][downloads-url]
 
 [![npm badge][npm-badge-png]][package-url]
 
-Helper functions around Function call/apply/bind, for use in `call-bind`.
+ES Object-related atoms: Object, ToObject, RequireObjectCoercible.
 
-The only packages that should likely ever use this package directly are `call-bind` and `get-intrinsic`.
-Please use `call-bind` unless you have a very good reason not to.
-
-## Getting started
-
-```sh
-npm install --save call-bind-apply-helpers
-```
-
-## Usage/Examples
+## Example
 
 ```js
 const assert = require('assert');
-const callBindBasic = require('call-bind-apply-helpers');
 
-function f(a, b) {
-	assert.equal(this, 1);
-	assert.equal(a, 2);
-	assert.equal(b, 3);
-	assert.equal(arguments.length, 2);
-}
+const $Object = require('es-object-atoms');
+const isObject = require('es-object-atoms/isObject');
+const ToObject = require('es-object-atoms/ToObject');
+const RequireObjectCoercible = require('es-object-atoms/RequireObjectCoercible');
 
-const fBound = callBindBasic([f, 1]);
+assert.equal($Object, Object);
+assert.throws(() => ToObject(null), TypeError);
+assert.throws(() => ToObject(undefined), TypeError);
+assert.throws(() => RequireObjectCoercible(null), TypeError);
+assert.throws(() => RequireObjectCoercible(undefined), TypeError);
 
-delete Function.prototype.call;
-delete Function.prototype.bind;
+assert.equal(isObject(undefined), false);
+assert.equal(isObject(null), false);
+assert.equal(isObject({}), true);
+assert.equal(isObject([]), true);
+assert.equal(isObject(function () {}), true);
 
-fBound(2, 3);
+assert.deepEqual(RequireObjectCoercible(true), true);
+assert.deepEqual(ToObject(true), Object(true));
+
+const obj = {};
+assert.equal(RequireObjectCoercible(obj), obj);
+assert.equal(ToObject(obj), obj);
 ```
 
 ## Tests
+Simply clone the repo, `npm install`, and run `npm test`
 
-Clone the repo, `npm install`, and run `npm test`
+## Security
 
-[package-url]: https://npmjs.org/package/call-bind-apply-helpers
-[npm-version-svg]: https://versionbadg.es/ljharb/call-bind-apply-helpers.svg
-[deps-svg]: https://david-dm.org/ljharb/call-bind-apply-helpers.svg
-[deps-url]: https://david-dm.org/ljharb/call-bind-apply-helpers
-[dev-deps-svg]: https://david-dm.org/ljharb/call-bind-apply-helpers/dev-status.svg
-[dev-deps-url]: https://david-dm.org/ljharb/call-bind-apply-helpers#info=devDependencies
-[npm-badge-png]: https://nodei.co/npm/call-bind-apply-helpers.png?downloads=true&stars=true
-[license-image]: https://img.shields.io/npm/l/call-bind-apply-helpers.svg
+Please email [@ljharb](https://github.com/ljharb) or see https://tidelift.com/security if you have a potential security vulnerability to report.
+
+[package-url]: https://npmjs.org/package/es-object-atoms
+[npm-version-svg]: https://versionbadg.es/ljharb/es-object-atoms.svg
+[deps-svg]: https://david-dm.org/ljharb/es-object-atoms.svg
+[deps-url]: https://david-dm.org/ljharb/es-object-atoms
+[dev-deps-svg]: https://david-dm.org/ljharb/es-object-atoms/dev-status.svg
+[dev-deps-url]: https://david-dm.org/ljharb/es-object-atoms#info=devDependencies
+[npm-badge-png]: https://nodei.co/npm/es-object-atoms.png?downloads=true&stars=true
+[license-image]: https://img.shields.io/npm/l/es-object-atoms.svg
 [license-url]: LICENSE
-[downloads-image]: https://img.shields.io/npm/dm/call-bind-apply-helpers.svg
-[downloads-url]: https://npm-stat.com/charts.html?package=call-bind-apply-helpers
-[codecov-image]: https://codecov.io/gh/ljharb/call-bind-apply-helpers/branch/main/graphs/badge.svg
-[codecov-url]: https://app.codecov.io/gh/ljharb/call-bind-apply-helpers/
-[actions-image]: https://img.shields.io/endpoint?url=https://github-actions-badge-u3jn4tfpocch.runkit.sh/ljharb/call-bind-apply-helpers
-[actions-url]: https://github.com/ljharb/call-bind-apply-helpers/actions
+[downloads-image]: https://img.shields.io/npm/dm/es-object.svg
+[downloads-url]: https://npm-stat.com/charts.html?package=es-object-atoms
+[codecov-image]: https://codecov.io/gh/ljharb/es-object-atoms/branch/main/graphs/badge.svg
+[codecov-url]: https://app.codecov.io/gh/ljharb/es-object-atoms/
+[actions-image]: https://img.shields.io/endpoint?url=https://github-actions-badge-u3jn4tfpocch.runkit.sh/ljharb/es-object-atoms
+[actions-url]: https://github.com/ljharb/es-object-atoms/actions
